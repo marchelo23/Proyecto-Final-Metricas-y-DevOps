@@ -1,0 +1,29 @@
+# Secretos y credenciales
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+kubeconfig
+*kubeconfig*
+*.kubeconfig
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
+
+# Artefactos locales
+dist/
+build/
+node_modules/
+*.log
+
+# SO y editores
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
