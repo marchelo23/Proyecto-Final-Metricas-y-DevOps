@@ -21,6 +21,15 @@ dist/
 build/
 node_modules/
 *.log
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+reports/
+*.egg-info/
 
 # SO y editores
 .DS_Store

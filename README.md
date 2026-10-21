@@ -6,7 +6,26 @@ Repositorio de trabajo del proyecto final. El backlog está compuesto por **27 i
 
 - **URL:** <https://github.com/marchelo23/Proyecto-Final-Metricas-y-DevOps>
 - **Milestones:** `3.1 Aplicación y arquitectura`, `3.2 DevOps` y `3.3 Métricas de Software y observabilidad`
-- **Estado:** backlog inicial creado; implementación pendiente.
+- **Estado:** backlog inicial creado; el esqueleto técnico COM-02 implementa configuración y salud, no ingesta ni análisis funcionales.
+
+## Arranque local del esqueleto COM-02
+
+Requiere Python 3.12 o 3.13 y [`uv`](https://docs.astral.sh/uv/). Desde la raíz del repositorio:
+
+```bash
+uv sync --group dev
+uv run uvicorn event_service.main:app --host 127.0.0.1 --port 8000
+```
+
+`GET http://127.0.0.1:8000/health/live` devuelve `200`. `GET /health/ready` devuelve `503` sin `DATABASE_URL`; con una URL `postgresql+psycopg://...` **aportada por el entorno** verifica `SELECT 1` y devuelve `200` solo si PostgreSQL responde. No se incluyen credenciales ni se crea automáticamente la base o sus tablas. `EVENT_PRODUCER_KEY` y `EVENT_ANALYST_KEY` se leerán del entorno para el control de acceso futuro; hoy no hay rutas protegidas implementadas.
+
+```bash
+uv run pytest
+# Opcional: evidencia local fuera del repositorio
+uv run pytest --junitxml=/tmp/opencode/event-service-junit.xml --html=/tmp/opencode/event-service-report.html --self-contained-html
+```
+
+La [arquitectura implementada](docs/arquitectura/contexto.md) y los [ADRs](docs/adr/0001-descomposicion.md) separan lo que ya existe de lo pendiente; Azure, K3s y registro de imágenes **no están desplegados** por este cambio.
 
 ## Backlog
 
