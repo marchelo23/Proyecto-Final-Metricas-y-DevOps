@@ -42,7 +42,10 @@ def count_events(
     start = window["from"].astimezone(timezone.utc)
     end = window["to"].astimezone(timezone.utc)
     group_by = window["group_by"]
-    buckets = sorted(repository.counts(start, end, group_by), key=lambda item: item[0])
+    buckets = sorted(
+        repository.counts(start=start, end=end, group_by=group_by),
+        key=lambda item: item[0],
+    )
     return {
         "total": sum(count for _, count in buckets),
         "group_by": group_by,
