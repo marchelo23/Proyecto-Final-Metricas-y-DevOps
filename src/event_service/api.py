@@ -20,7 +20,7 @@ def _event_document(event: StoredEvent) -> dict[str, Any]:
         "id": event.id,
         "source": event.source,
         "external_id": event.external_id,
-        "type": event.event_type,
+        "type": event.type,
         "occurred_at": event.occurred_at.astimezone(timezone.utc),
         "payload": event.payload,
         "ingested_at": event.ingested_at.astimezone(timezone.utc),
