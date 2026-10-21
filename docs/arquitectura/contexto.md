@@ -1,29 +1,21 @@
-# Contexto — arquitectura implementada (COM-02)
+# Contexto — MVP local implementado (COM-02)
 
-**Estado (2026-10-21):** esqueleto ejecutable del prototipo, no conformidad demostrada con el escenario definitivo. No se recibió enunciado detallado. La aplicación expone únicamente salud; ingesta, consulta y análisis son contratos de trabajo **pendientes de implementar**. Las líneas discontinuas del diagrama son interfaces proyectadas o conexiones condicionales, **no** recursos observados.
+**Estado (2026-10-21):** código y pruebas locales de ingesta/análisis disponibles; **no** se ha desplegado en Azure/K3s. `producer` y `analyst` son roles elegidos para el MVP. Flechas continuas: interacciones implementadas y probadas en local.
 
 ```mermaid
 flowchart LR
-    observer["Cliente / operador de salud"]
-    producer["Productor (rol provisional; aún sin ruta)"]
-    analyst["Analista (rol provisional; aún sin ruta)"]
-    app["event_service · proceso FastAPI<br/>/health/live y /health/ready"]
-    db[("PostgreSQL externo opcional<br/>no aprovisionado por COM-02")]
-
-    observer -->|"HTTP GET salud (implementado)"| app
-    producer -.->|"HTTP POST /v1/events (pendiente)"| app
-    analyst -.->|"HTTP GET eventos y análisis (pendiente)"| app
-    app -.->|"SQL SELECT 1 para readiness si hay DATABASE_URL"| db
+    producer["Productor · rol provisional"] -->|"HTTP JSON POST /v1/events + X-API-Key"| app
+    analyst["Analista · rol provisional"] -->|"HTTP GET /v1/events/{id}, /v1/analysis/counts + X-API-Key"| app
+    operator["Operador / sonda"] -->|"HTTP GET /health/live, /health/ready"| app
+    app["event_service · FastAPI modular"] -->|"SQL sincrónico · eventos y agregados"| db[("PostgreSQL 16 · eventos")]
 ```
 
-| Límite | Responsabilidad actual | Motivo y propiedad |
+| Límite | Responsabilidad y dato del que responde | Motivo |
 |---|---|---|
-| `event_service` (un proceso, un código fuente) | Componer FastAPI; exponer salud; cargar configuración y construir un engine sin abrir una conexión hasta readiness. | Frontera HTTP mínima sin distribución prematura. No posee todavía registros de eventos. |
-| Entorno del proceso | Proveer `DATABASE_URL`, `EVENT_PRODUCER_KEY`, `EVENT_ANALYST_KEY` si se configuran. | Origen externo de configuración, no incluye secretos en Git; las claves no tienen valor por defecto. |
-| PostgreSQL (dependencia condicional) | Responder al `SELECT 1` de readiness si está configurado y alcanzable. | La app no aprovisiona PostgreSQL; COM-03 construirá esquema, migración y prueba de persistencia. |
+| `event_service` (un proceso) | Autentica, valida, aplica reglas de ingesta/consulta y permisos; **dueño lógico** de `events`, devuelve errores seguros y genera conteos derivados. | Un dato y reglas compartidas no justifican todavía varios servicios, colas o copias del dato. |
+| PostgreSQL 16 | **Custodio físico** de `events` (UUID, origen, ID externo, tipo, fechas UTC, payload JSONB), unicidad `(source, external_id)` y migraciones Alembic. | Permite consulta temporal y durabilidad al reiniciar procesos con el volumen conservado; no es un backup de VM. |
+| Entorno del proceso | Provee `DATABASE_URL` y dos claves de API distintas; sin ellas las rutas protegidas fallan cerradas. | Credenciales fuera de código y repositorio; la gestión en K3s corresponde a DEV-10. |
 
-**Flujo existente:** un cliente llama `GET /health/live`; la app responde sin dependencia. En `GET /health/ready`, sin URL responde `503` con error público seguro; con URL, usa SQLAlchemy/psycopg para ejecutar `SELECT 1` y responde `200` o `503`. No se envía URL ni excepción de DB en la respuesta. No hay comunicación asíncrona ni eventos emitidos.
+**Flujo principal:** un productor envía evento; la ruta verifica rol y `EventCreate`, el servicio vuelve a comprobar el permiso, el repositorio inserta con restricción única y confirma antes de responder `201`. El analista autorizado consulta el evento por UUID o el conteo por fuente/tipo dentro de `[from,to)`; los agregados se calculan de la tabla, no se duplican como fuente de verdad. Datos inválidos→422, duplicado→409, ausente→404, caída de DB→503; al restaurar la DB, la misma API vuelve a contestar sin reinicio. `X-Request-ID` correlaciona respuesta y log seguro. No hay comunicación asíncrona.
 
-**Flujo MVP propuesto, no actual:** un productor autenticado envía un evento; la entrada valida/autentica, la función de negocio exige permiso y unicidad `(source, external_id)`, el repositorio persiste el original y metadatos, y responde `201` o un error seguro. El analista obtiene un evento o conteos derivados por HTTP. El dueño lógico de `events` y de las reglas de análisis será la capacidad de negocio del servicio (COM-01), mientras el adaptador COM-03 será custodio físico de la tabla. Los conteos son derivados, no una segunda fuente de verdad. COM-04 define validación/errores y COM-05 control de acceso. Nada de esto está operativo en COM-02.
-
-La [vista de contenedores](contenedores.md) enlaza rutas con archivos reales; [despliegue](despliegue.md) distingue el arranque local de los recursos ausentes. Decisiones: [descomposición](../adr/0001-descomposicion.md), [almacenamiento](../adr/0002-almacenamiento.md), [comunicación](../adr/0003-comunicacion.md).
+La [vista de módulos](contenedores.md) enlaza responsabilidades con archivos y [despliegue](despliegue.md) distingue Compose local de infraestructura aún inexistente. Decisiones: [descomposición](../adr/0001-descomposicion.md), [almacenamiento](../adr/0002-almacenamiento.md), [comunicación](../adr/0003-comunicacion.md). Nuevas funciones o componentes requerirán actualizar estos contratos y pruebas.

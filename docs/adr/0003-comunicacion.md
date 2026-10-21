@@ -1,11 +1,11 @@
 # ADR-0003 — HTTP y SQL síncronos, sin cola por defecto
 
 - **Fecha:** 2026-10-21
-- **Estado:** aceptada para el prototipo; flujos de dominio pendientes de COM-01/03/04/05.
+- **Estado:** aceptada e implementada en el MVP local; reevaluar si cambian los requisitos de carga o entrega.
 
 ## Contexto y decisión
 
-Para el MVP provisional el cliente necesita saber si el evento fue persistido, duplicado o inválido y consultar resultados actuales. Elegimos HTTP/JSON síncrono entre cliente y app, y SQL síncrono entre app y PostgreSQL. Hoy existen `GET /health/live` y `GET /health/ready`; este último ejecuta `SELECT 1` si hay DB configurada ([contexto](../arquitectura/contexto.md)). Las rutas `/v1/...` aún son un contrato objetivo, no comunicación ya implementada. No hay contrato de eventos asíncronos, entrega, orden ni consumidor externo.
+Para el MVP provisional el cliente necesita saber si el evento fue persistido, duplicado o inválido y consultar resultados actuales. Elegimos HTTP/JSON síncrono entre cliente y app, y SQL síncrono entre app y PostgreSQL. `POST /v1/events`, `GET /v1/events/{id}`, `GET /v1/analysis/counts` y las sondas existen y se probaron con PostgreSQL local ([contexto](../arquitectura/contexto.md)). No hay contrato de eventos asíncronos, entrega, orden ni consumidor externo.
 
 ## Alternativas y consecuencias
 

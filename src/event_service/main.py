@@ -1,30 +1,14 @@
 """Composición HTTP y sondas de salud del prototipo."""
 
-from uuid import uuid4
-
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import ArgumentError, SQLAlchemyError
 
 from event_service.api import router
 from event_service.config import Settings
+from event_service.contracts import StorageUnavailable
 from event_service.errors import register_handlers
-
-
-def _unavailable_response() -> JSONResponse:
-    # No devolver detalles de conexión, URL, credenciales ni causa original.
-    return JSONResponse(
-        status_code=503,
-        content={
-            "error": {
-                "code": "DEPENDENCY_UNAVAILABLE",
-                "message": "Storage is unavailable",
-                "request_id": str(uuid4()),
-            }
-        },
-    )
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -46,7 +30,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             app.state.engine = create_engine(
                 url,
                 pool_pre_ping=True,
-                connect_args={"connect_timeout": 3},
+                connect_args={
+                    "connect_timeout": 3,
+                    "options": "-c statement_timeout=3000",
+                },
             )
         except SQLAlchemyError:
             # Una URL mal configurada tampoco debe impedir liveness ni salir
@@ -60,17 +47,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def live() -> dict[str, str]:
         return {"status": "alive"}
 
-    @app.get("/health/ready", response_model=None)
-    def ready(request: Request) -> dict[str, str] | JSONResponse:
+    @app.get("/health/ready")
+    def ready(request: Request) -> dict[str, str]:
         engine = request.app.state.engine
         if engine is None:
-            return _unavailable_response()
+            raise StorageUnavailable
 
         try:
             with engine.connect() as connection:
                 connection.execute(text("SELECT 1"))
-        except SQLAlchemyError:
-            return _unavailable_response()
+        except SQLAlchemyError as exc:
+            raise StorageUnavailable from exc
 
         return {"status": "ready"}
 
