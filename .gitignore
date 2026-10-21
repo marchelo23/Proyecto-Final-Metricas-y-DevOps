@@ -21,6 +21,11 @@ dist/
 build/
 node_modules/
 *.log
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
 
 # SO y editores
 .DS_Store
