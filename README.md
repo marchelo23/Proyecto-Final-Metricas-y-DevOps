@@ -6,7 +6,7 @@ Repositorio de trabajo del proyecto final. El backlog está compuesto por **27 i
 
 - **URL:** <https://github.com/marchelo23/Proyecto-Final-Metricas-y-DevOps>
 - **Milestones:** `3.1 Aplicación y arquitectura`, `3.2 DevOps` y `3.3 Métricas de Software y observabilidad`
-- **Estado (tras integrar COM-01…COM-06):** MVP local de ingesta y análisis de eventos implementado; issues COM abiertos hasta revisión/defensa; despliegue Azure/K3s, costos reales y requisitos MET pendientes.
+- **Estado:** MVP local de ingesta y análisis de eventos integrado en `main`; issues #1–#6 abiertos hasta revisión/defensa; despliegue Azure/K3s, costos reales y requisitos MET pendientes.
 
 ## MVP local de ingesta y análisis de eventos
 
@@ -16,26 +16,45 @@ Requiere Python 3.12/3.13, [`uv`](https://docs.astral.sh/uv/) y Docker Compose o
 
 ```bash
 uv sync --locked
-export POSTGRES_USER=events POSTGRES_DB=events_test POSTGRES_PORT=5432
-export POSTGRES_PASSWORD="$(openssl rand -hex 16)"
-export EVENT_PRODUCER_KEY="$(openssl rand -hex 16)"
-export EVENT_ANALYST_KEY="$(openssl rand -hex 16)"
-export DATABASE_URL="postgresql+psycopg://events:${POSTGRES_PASSWORD}@127.0.0.1:5432/events_test"
-export TEST_DATABASE_URL="$DATABASE_URL"
+
+cat > .env <<EOF
+POSTGRES_USER=events
+POSTGRES_DB=events_test
+POSTGRES_PORT=5432
+POSTGRES_PASSWORD=$(openssl rand -hex 16)
+EVENT_PRODUCER_KEY=$(openssl rand -hex 16)
+EVENT_ANALYST_KEY=$(openssl rand -hex 16)
+EOF
+set -a; . ./.env; set +a
+cat >> .env <<EOF
+DATABASE_URL=postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@127.0.0.1:${POSTGRES_PORT}/${POSTGRES_DB}
+TEST_DATABASE_URL=postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@127.0.0.1:${POSTGRES_PORT}/${POSTGRES_DB}
+EOF
+set -a; . ./.env; set +a
+chmod 600 .env
+
 docker compose up -d postgres
 for intento in $(seq 1 30); do
-  docker compose exec -T postgres pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" && break
+  if docker compose exec -T postgres pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"; then
+    break
+  fi
   sleep 1
 done
+docker compose exec -T postgres pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" || {
+  echo "PostgreSQL no respondió; revisá 'docker compose logs postgres'." >&2
+  exit 1
+}
 uv run --locked alembic upgrade head
 uv run uvicorn event_service.main:app --host 127.0.0.1 --port 8000
 ```
 
-No copiar claves a Git, imágenes ni logs. Guardarlas en un gestor de secretos si se necesitan tras cerrar la terminal: **un volumen ya inicializado conserva la contraseña original**, aunque se vuelva a ejecutar `openssl rand`. No usar estos comandos sobre una base de producción ni ejecutar `docker compose down -v` sobre datos que se quieran conservar.
+`.env` ya está en `.gitignore`: no lo commitees. Guardá las claves en un gestor de secretos si las necesitás tras cerrar la terminal: **un volumen ya inicializado conserva la contraseña original**, aunque generes un `.env` nuevo. No usar estos comandos sobre una base de producción ni ejecutar `docker compose down -v` sobre datos que quieras conservar.
 
-En otra terminal con las mismas variables de entorno:
+En otra terminal, cargá el mismo `.env` y probá la API:
 
 ```bash
+set -a; . ./.env; set +a
+curl -i http://127.0.0.1:8000/health/live
 curl -i http://127.0.0.1:8000/health/ready
 curl -i -H "X-API-Key: $EVENT_PRODUCER_KEY" -H 'Content-Type: application/json' \
   -d '{"source":"sensor-a","external_id":"e-001","type":"temperature","occurred_at":"2026-10-21T12:00:00Z","payload":{"value":23.5}}' \
@@ -49,6 +68,10 @@ uv run --locked pytest --junitxml=/tmp/opencode/event-service-junit.xml \
 ```
 
 La [arquitectura local](docs/arquitectura/contexto.md), [trade-offs COM-06](docs/arquitectura/tradeoffs.md), [ADRs](docs/adr/0001-descomposicion.md) y `docs/evidencia/COM-0X/` describen decisiones y pruebas. El workflow de aceptación ejecuta migraciones y **121 pruebas con PostgreSQL 16** en PR/main, y adjunta JUnit/HTML. Azure, K3s, imágenes y la plataforma MET **aún no están desplegados** por estos seis issues.
+
+## Estado de la entrega
+
+COM-01…COM-06 están integrados en `main` mediante los PRs #28–#36. Los issues #1–#6 siguen abiertos **a propósito**: el merge integra el código, pero el cierre requiere revisión y defensa. CI de `main`: [run #39669250513](https://github.com/marchelo23/Proyecto-Final-Metricas-y-DevOps/actions/runs/39669250513), **121 pruebas** con PostgreSQL 16. Pendientes: DEV-03 (protección de `main`), DEV-06/09 (Azure/K3s), DEV-14 (costos) y MET.
 
 ## Backlog
 
