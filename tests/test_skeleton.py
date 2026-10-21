@@ -28,6 +28,7 @@ def test_ready_without_database_is_503_and_safe() -> None:
 
 def test_ready_checks_select_one_when_database_is_configured(monkeypatch) -> None:
     executed = []
+    engine_kwargs = {}
 
     class Connection:
         def __enter__(self):
@@ -43,7 +44,8 @@ def test_ready_checks_select_one_when_database_is_configured(monkeypatch) -> Non
         def connect(self):
             return Connection()
 
-    def fake_create_engine(*_args, **_kwargs):
+    def fake_create_engine(*_args, **kwargs):
+        engine_kwargs.update(kwargs)
         return Engine()
 
     monkeypatch.setattr("event_service.main.create_engine", fake_create_engine)
@@ -54,6 +56,8 @@ def test_ready_checks_select_one_when_database_is_configured(monkeypatch) -> Non
     assert response.status_code == 200
     assert response.json() == {"status": "ready"}
     assert executed == ["SELECT 1"]
+    assert engine_kwargs["connect_args"]["connect_timeout"] == 3
+    assert "statement_timeout=3000" in engine_kwargs["connect_args"]["options"]
 
 
 def test_ready_masks_database_errors(monkeypatch) -> None:

@@ -30,7 +30,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             app.state.engine = create_engine(
                 url,
                 pool_pre_ping=True,
-                connect_args={"connect_timeout": 3},
+                connect_args={
+                    "connect_timeout": 3,
+                    "options": "-c statement_timeout=3000",
+                },
             )
         except SQLAlchemyError:
             # Una URL mal configurada tampoco debe impedir liveness ni salir

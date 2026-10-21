@@ -23,6 +23,7 @@ flowchart LR
 **Render reproducible:** los tres Markdown usan bloques `mermaid` renderizables en GitHub. Para volver a verificar sintaxis con Mermaid CLI 11.12.0 y Chromium desde la raíz del checkout (crear el directorio de salida antes):
 
 ```bash
+mkdir -p /tmp/opencode
 PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium PUPPETEER_SKIP_DOWNLOAD=1 npx --yes --package=@mermaid-js/mermaid-cli@11.12.0 mmdc -i docs/arquitectura/contexto.md -o /tmp/opencode/COM-02-contexto-render.md
 PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium PUPPETEER_SKIP_DOWNLOAD=1 npx --yes --package=@mermaid-js/mermaid-cli@11.12.0 mmdc -i docs/arquitectura/contenedores.md -o /tmp/opencode/COM-02-contenedores-render.md
 PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium PUPPETEER_SKIP_DOWNLOAD=1 npx --yes --package=@mermaid-js/mermaid-cli@11.12.0 mmdc -i docs/arquitectura/despliegue.md -o /tmp/opencode/COM-02-despliegue-render.md
