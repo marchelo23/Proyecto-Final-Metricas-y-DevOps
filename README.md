@@ -6,48 +6,26 @@ Repositorio de trabajo del proyecto final. El backlog está compuesto por **27 i
 
 - **URL:** <https://github.com/marchelo23/Proyecto-Final-Metricas-y-DevOps>
 - **Milestones:** `3.1 Aplicación y arquitectura`, `3.2 DevOps` y `3.3 Métricas de Software y observabilidad`
-- **Estado:** MVP local de ingesta y análisis de eventos implementado para COM-01…COM-05; escenario oficial detallado, despliegue Azure/K3s y requisitos MET pendientes.
+- **Estado:** backlog inicial creado; el esqueleto técnico COM-02 implementa configuración y salud, no ingesta ni análisis funcionales.
 
-## MVP local de ingesta y análisis de eventos
+## Arranque local del esqueleto COM-02
 
-Se ofrece una API FastAPI con PostgreSQL 16: ingresar eventos (`POST /v1/events`), recuperarlos (`GET /v1/events/{id}`) y contar por tipo o fuente en una ventana `[from,to)` (`GET /v1/analysis/counts`). Los roles provisionales `producer` y `analyst` usan claves distintas por `X-API-Key`. El [contrato y matriz de pruebas](docs/escenario.md) **son un MVP elegido para avanzar**, no reglas atribuidas a un enunciado oficial no recibido.
-
-Requiere Python 3.12/3.13, [`uv`](https://docs.astral.sh/uv/) y Docker Compose o Podman Compose. Desde la raíz del repositorio, **solo con una base local descartable nueva**:
+Requiere Python 3.12 o 3.13 y [`uv`](https://docs.astral.sh/uv/). Desde la raíz del repositorio:
 
 ```bash
-uv sync --locked
-export POSTGRES_USER=events POSTGRES_DB=events_test POSTGRES_PORT=5432
-export POSTGRES_PASSWORD="$(openssl rand -hex 16)"
-export EVENT_PRODUCER_KEY="$(openssl rand -hex 16)"
-export EVENT_ANALYST_KEY="$(openssl rand -hex 16)"
-export DATABASE_URL="postgresql+psycopg://events:${POSTGRES_PASSWORD}@127.0.0.1:5432/events_test"
-export TEST_DATABASE_URL="$DATABASE_URL"
-docker compose up -d postgres
-for intento in $(seq 1 30); do
-  docker compose exec -T postgres pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" && break
-  sleep 1
-done
-uv run --locked alembic upgrade head
+uv sync --group dev
 uv run uvicorn event_service.main:app --host 127.0.0.1 --port 8000
 ```
 
-No copiar claves a Git, imágenes ni logs. Guardarlas en un gestor de secretos si se necesitan tras cerrar la terminal: **un volumen ya inicializado conserva la contraseña original**, aunque se vuelva a ejecutar `openssl rand`. No usar estos comandos sobre una base de producción ni ejecutar `docker compose down -v` sobre datos que se quieran conservar.
-
-En otra terminal con las mismas variables de entorno:
+`GET http://127.0.0.1:8000/health/live` devuelve `200`. `GET /health/ready` devuelve `503` sin `DATABASE_URL`; con una URL `postgresql+psycopg://...` **aportada por el entorno** verifica `SELECT 1` y devuelve `200` solo si PostgreSQL responde. No se incluyen credenciales ni se crea automáticamente la base o sus tablas. `EVENT_PRODUCER_KEY` y `EVENT_ANALYST_KEY` se leerán del entorno para el control de acceso futuro; hoy no hay rutas protegidas implementadas.
 
 ```bash
-curl -i http://127.0.0.1:8000/health/ready
-curl -i -H "X-API-Key: $EVENT_PRODUCER_KEY" -H 'Content-Type: application/json' \
-  -d '{"source":"sensor-a","external_id":"e-001","type":"temperature","occurred_at":"2026-10-21T12:00:00Z","payload":{"value":23.5}}' \
-  http://127.0.0.1:8000/v1/events
-curl -G -H "X-API-Key: $EVENT_ANALYST_KEY" \
-  --data-urlencode 'from=2026-10-21T00:00:00Z' --data-urlencode 'to=2026-10-22T00:00:00Z' \
-  --data-urlencode 'group_by=type' http://127.0.0.1:8000/v1/analysis/counts
-uv run --locked pytest --junitxml=/tmp/opencode/event-service-junit.xml \
-  --html=/tmp/opencode/event-service-report.html --self-contained-html
+uv run pytest
+# Opcional: evidencia local fuera del repositorio
+uv run pytest --junitxml=/tmp/opencode/event-service-junit.xml --html=/tmp/opencode/event-service-report.html --self-contained-html
 ```
 
-La [arquitectura local](docs/arquitectura/contexto.md), [ADRs](docs/adr/0001-descomposicion.md) y `docs/evidencia/COM-0X/` describen las decisiones y pruebas. El workflow de aceptación adjunta JUnit/HTML al PR; Azure, K3s, imágenes y la plataforma MET **aún no están desplegados** por estos cinco issues.
+La [arquitectura implementada](docs/arquitectura/contexto.md) y los [ADRs](docs/adr/0001-descomposicion.md) separan lo que ya existe de lo pendiente; Azure, K3s y registro de imágenes **no están desplegados** por este cambio.
 
 ## Backlog
 

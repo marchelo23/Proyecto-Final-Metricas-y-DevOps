@@ -1,6 +1,6 @@
 # Escenario provisional: ingesta y análisis de eventos (COM-01)
 
-El enunciado detallado del escenario no está disponible. Esta matriz describe **sólo el MVP provisional acordado**; no atribuye estas reglas ni los roles `producer`/`analyst` a un enunciado oficial. La fuente de verdad provisional es el contrato coordinado COM-01–05. Si se recibe el escenario real, debe cotejarse antes de afirmar cobertura definitiva de #1.
+El alcance recibido es el tema **«Ingesta y Análisis de Eventos»** y los requisitos comunes COM. No hay reglas de negocio adicionales: esta matriz fija las decisiones concretas adoptadas para el **MVP inicial** (incluidos los roles `producer`/`analyst`), sin presentarlas como requisitos textuales del tema. Si el alcance cambia, se amplían reglas y pruebas antes de declarar cobertura de la nueva versión.
 
 | ID | Regla verificable del MVP | Prueba de aceptación (`tests/test_acceptance.py`) |
 |---|---|---|

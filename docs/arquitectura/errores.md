@@ -21,9 +21,9 @@ Formato único: `{"error":{"code":"...","message":"texto fijo","request_id":"...
 
 **Política de reintentos:** no reintentar escrituras automáticamente, ni en `errors.py` ni en capas superiores; ante 409 o 503 el cliente debe conocer el resultado antes de decidir una nueva operación. Tras volver la DB, repetir manualmente una lectura idempotente sí permite comprobar recuperación. No agregar backoff/timeout HTTP opaco que transforme un resultado de escritura desconocido en duplicados. COM-02 ya configura `connect_timeout=3` para nuevas conexiones PostgreSQL; COM-03 debe traducir fallos de conexión, ejecución y timeout a `StorageUnavailable` y verificar en integración el límite efectivo para operaciones DB. Este módulo no configura un timeout de consultas ni implementa reintentos con backoff.
 
-**Integración pendiente con COM-02:** el `main.py` inicial responde `/health/ready` con un `JSONResponse(503)` construido directamente, sin lanzar `StorageUnavailable`. Ese camino no pasa por estos handlers y actualmente no asegura que `error.request_id` coincida con `X-Request-ID`. El coordinador debe ajustar ese punto en la integración (sin atribuirle a COM-04 cambios de `main.py`). Además, el `errors.py` inicial de COM-02 es un placeholder: al integrar ramas hay que conservar la implementación de COM-04, no el placeholder.
+**Integración COM-02/04 completada:** `/health/ready` lanza `StorageUnavailable` y utiliza estos handlers; `error.request_id` coincide con `X-Request-ID`. El stub de `errors.py` se sustituyó por la implementación COM-04. La suite integrada lo comprueba.
 
-## Prueba REAL pendiente tras integrar COM-02 y COM-03
+## Prueba real de caída y recuperación (ejecutada localmente)
 
 Ejecutar **solo contra PostgreSQL local de pruebas**, con volumen y claves de prueba, nunca contra producción o una DB ajena. En esta máquina `docker` es wrapper de Podman y `docker compose` invoca `podman-compose`. Trabajar en el checkout integrado que contenga `compose.yaml`, migraciones y `event_service.main:app`:
 
@@ -92,4 +92,4 @@ Ejecutar **solo contra PostgreSQL local de pruebas**, con volumen y claves de pr
 
    Guardar estados, IDs de correlación, PID y logs sanitizados como evidencia. La prueba falla si aparece 500, se agota el timeout o requiere reiniciar la API. Recuperación de consulta **no** demuestra que sea seguro reintentar una escritura.
 
-4. Terminar solo el proceso de API iniciado en el paso 1 (`kill "$API_PID"`); conservar el almacenamiento de prueba si se necesita evidencia de durabilidad. Reejecutar `uv run pytest -q tests/test_errors.py` en la rama integrada: las pruebas HTTP, omitidas cuando aún no existe `contracts.py`, deben pasar entonces. La prueba con PostgreSQL de este apartado **no se ha ejecutado en la rama COM-04 aislada**.
+4. Terminar solo el proceso de API iniciado en el paso 1 (`kill "$API_PID"`); conservar el almacenamiento de prueba si se necesita evidencia de durabilidad. Reejecutar `uv run pytest -q tests/test_errors.py` en la rama integrada. **Resultado local de integración (2026-10-21):** `200 before-1 → 503 down-1 → 200 after-1`, mismo PID de API, IDs de solicitud coincidentes en cabecera/cuerpo; véase [evidencia](../evidencia/COM-04/index.md). El workflow prueba los casos automatizados, no detiene contenedores de la base durante CI.

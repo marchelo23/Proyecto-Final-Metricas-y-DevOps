@@ -1,6 +1,6 @@
 # COM-05 — Evidencia local parcial (MVP)
 
-**Criterio:** el MVP de ingesta y análisis de eventos restringe la creación a `producer` y las consultas a `analyst`. Claves ausentes/inválidas → 401; credencial válida del otro rol → 403. Los roles son una decisión provisional del MVP, no se atribuyen al enunciado oficial no recibido. Véase [matriz de acceso](../../arquitectura/acceso.md) y el [issue #5](https://github.com/marchelo23/Proyecto-Final-Metricas-y-DevOps/issues/5).
+**Criterio:** el MVP de ingesta y análisis de eventos restringe la creación a `producer` y las consultas a `analyst`. Claves ausentes/inválidas → 401; credencial válida del otro rol → 403. Los roles son una decisión explícita del MVP para el tema y los requisitos comunes recibidos. Véase [matriz de acceso](../../arquitectura/acceso.md) y el [issue #5](https://github.com/marchelo23/Proyecto-Final-Metricas-y-DevOps/issues/5).
 
 ## Reproducción local
 
@@ -14,6 +14,6 @@ PYTHONPATH=src python3 -m pytest -q tests/test_auth.py
 
 - Ejecutar la suite sobre la aplicación integrada, conservar un workflow run y enlazar un PR revisado por otra persona desde el issue.
 - Verificar despliegue y rotación/gestión real de secretos en el ambiente de defensa. Las claves reales no se publican en Git.
-- Contrastar los actores y permisos provisionales con el enunciado detallado del escenario; si existe propiedad individual de eventos, añadir y probar aislamiento entre propietarios.
+- Si el alcance futuro introduce propiedad individual de eventos, añadir y probar aislamiento entre propietarios. Actualmente no hay recursos individuales por usuario.
 
 No se afirma despliegue, PR, workflow ejecutado ni revisión ajena. No cerrar el issue con esta evidencia parcial.

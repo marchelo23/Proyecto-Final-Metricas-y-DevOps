@@ -1,6 +1,6 @@
 # Contexto — MVP local implementado (COM-02)
 
-**Estado (2026-10-21):** código y pruebas locales de ingesta/análisis disponibles; **no** se ha desplegado el escenario en Azure/K3s ni se ha recibido su enunciado detallado. `producer` y `analyst` son roles provisionales del MVP. Flechas continuas: interacciones implementadas y probadas en local.
+**Estado (2026-10-21):** código y pruebas locales de ingesta/análisis disponibles; **no** se ha desplegado en Azure/K3s. `producer` y `analyst` son roles elegidos para el MVP. Flechas continuas: interacciones implementadas y probadas en local.
 
 ```mermaid
 flowchart LR
@@ -18,4 +18,4 @@ flowchart LR
 
 **Flujo principal:** un productor envía evento; la ruta verifica rol y `EventCreate`, el servicio vuelve a comprobar el permiso, el repositorio inserta con restricción única y confirma antes de responder `201`. El analista autorizado consulta el evento por UUID o el conteo por fuente/tipo dentro de `[from,to)`; los agregados se calculan de la tabla, no se duplican como fuente de verdad. Datos inválidos→422, duplicado→409, ausente→404, caída de DB→503; al restaurar la DB, la misma API vuelve a contestar sin reinicio. `X-Request-ID` correlaciona respuesta y log seguro. No hay comunicación asíncrona.
 
-La [vista de módulos](contenedores.md) enlaza responsabilidades con archivos y [despliegue](despliegue.md) distingue Compose local de infraestructura aún inexistente. Decisiones: [descomposición](../adr/0001-descomposicion.md), [almacenamiento](../adr/0002-almacenamiento.md), [comunicación](../adr/0003-comunicacion.md). Las funciones oficiales del escenario y cualquier componente adicional se revisarán cuando llegue su enunciado.
+La [vista de módulos](contenedores.md) enlaza responsabilidades con archivos y [despliegue](despliegue.md) distingue Compose local de infraestructura aún inexistente. Decisiones: [descomposición](../adr/0001-descomposicion.md), [almacenamiento](../adr/0002-almacenamiento.md), [comunicación](../adr/0003-comunicacion.md). Nuevas funciones o componentes requerirán actualizar estos contratos y pruebas.

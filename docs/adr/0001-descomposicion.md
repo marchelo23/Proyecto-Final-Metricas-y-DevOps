@@ -1,7 +1,7 @@
 # ADR-0001 — Una aplicación modular para el prototipo
 
 - **Fecha:** 2026-10-21
-- **Estado:** aceptada e implementada en el MVP local; revisar con el enunciado oficial y antes del despliegue.
+- **Estado:** aceptada e implementada en el MVP local; revisar si cambian escala, reglas o despliegue.
 
 ## Contexto y decisión
 

@@ -1,7 +1,7 @@
 # ADR-0003 — HTTP y SQL síncronos, sin cola por defecto
 
 - **Fecha:** 2026-10-21
-- **Estado:** aceptada e implementada en el MVP local; reevaluar según el escenario oficial.
+- **Estado:** aceptada e implementada en el MVP local; reevaluar si cambian los requisitos de carga o entrega.
 
 ## Contexto y decisión
 
