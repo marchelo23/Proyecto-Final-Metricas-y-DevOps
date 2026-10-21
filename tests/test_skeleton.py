@@ -22,6 +22,7 @@ def test_ready_without_database_is_503_and_safe() -> None:
     assert response.status_code == 503
     assert response.json()["error"]["code"] == "DEPENDENCY_UNAVAILABLE"
     assert response.json()["error"]["request_id"]
+    assert response.headers["X-Request-ID"] == response.json()["error"]["request_id"]
     assert "DATABASE_URL" not in response.text
 
 
