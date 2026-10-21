@@ -1,6 +1,6 @@
 """HTTP routes for ingestion, retrieval and on-demand event counts."""
 
-from datetime import timezone
+from datetime import UTC
 from typing import Annotated, Any
 from uuid import UUID
 
@@ -21,9 +21,9 @@ def _event_document(event: StoredEvent) -> dict[str, Any]:
         "source": event.source,
         "external_id": event.external_id,
         "type": event.type,
-        "occurred_at": event.occurred_at.astimezone(timezone.utc),
+        "occurred_at": event.occurred_at.astimezone(UTC),
         "payload": event.payload,
-        "ingested_at": event.ingested_at.astimezone(timezone.utc),
+        "ingested_at": event.ingested_at.astimezone(UTC),
     }
 
 

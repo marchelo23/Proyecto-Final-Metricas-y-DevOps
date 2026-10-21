@@ -2,7 +2,7 @@
 
 import os
 from collections.abc import Callable, Iterator
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from uuid import UUID, uuid4
 
 import pytest
@@ -79,7 +79,7 @@ def new_source(cleanup_engine: Engine) -> Iterator[Callable[[], str]]:
 @pytest.fixture
 def window() -> tuple[datetime, datetime]:
     # Each test has its own time window, independent of pre-existing test data.
-    start = datetime(2040, 1, 1, 12, tzinfo=timezone.utc) + timedelta(
+    start = datetime(2040, 1, 1, 12, tzinfo=UTC) + timedelta(
         days=uuid4().int % 36525
     )
     return start, start + timedelta(hours=1)
@@ -121,7 +121,7 @@ def _counts(
 
 
 def _utc(value: str) -> datetime:
-    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    parsed = datetime.fromisoformat(value)
     assert parsed.utcoffset() == timedelta(0)
     return parsed
 
@@ -310,7 +310,6 @@ def test_service_rechecks_permission_before_repository_access(
 ) -> None:
     from event_service.auth import Principal
     from event_service.schemas import CountsQuery, EventCreate
-
     from event_service.service import count_events, create_event, get_event
 
     class NoAccessRepository:

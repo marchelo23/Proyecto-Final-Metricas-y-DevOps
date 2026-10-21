@@ -1,6 +1,6 @@
 """Business operations for the provisional event-ingestion MVP."""
 
-from datetime import timezone
+from datetime import UTC
 from uuid import UUID
 
 from .auth import Principal, ensure_permission
@@ -18,7 +18,7 @@ def create_event(
         source=event.source,
         external_id=event.external_id,
         event_type=event.type,
-        occurred_at=event.occurred_at.astimezone(timezone.utc),
+        occurred_at=event.occurred_at.astimezone(UTC),
         payload=event.payload,
     )
 
@@ -39,8 +39,8 @@ def count_events(
     ensure_permission(principal, "analysis:read")
     # Use the wire aliases rather than assuming the Python name for `from`.
     window = query.model_dump(by_alias=True)
-    start = window["from"].astimezone(timezone.utc)
-    end = window["to"].astimezone(timezone.utc)
+    start = window["from"].astimezone(UTC)
+    end = window["to"].astimezone(UTC)
     group_by = window["group_by"]
     buckets = sorted(
         repository.counts(start=start, end=end, group_by=group_by),
