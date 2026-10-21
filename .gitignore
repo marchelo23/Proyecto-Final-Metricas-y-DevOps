@@ -25,6 +25,10 @@ node_modules/
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+reports/
 *.egg-info/
 
 # SO y editores
