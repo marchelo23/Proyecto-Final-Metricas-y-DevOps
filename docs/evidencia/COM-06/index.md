@@ -1,0 +1,7 @@
+# COM-06 — decisiones y evidencia parcial
+
+**Issue:** [#6](https://github.com/marchelo23/Proyecto-Final-Metricas-y-DevOps/issues/6). [Registro de trade-offs](../../arquitectura/tradeoffs.md): consistencia, disponibilidad, costo, complejidad y acceso; cada decisión incluye alternativa descartada, riesgo/mitigación y disparador para revisarla. Se enlaza con [diagramas](../../arquitectura/contexto.md) y [ADR](../../adr/0001-descomposicion.md).
+
+**Reproducir la parte ya verificable:** aplicar migración y `uv run --locked pytest` con PostgreSQL 16 de pruebas; correr `scripts/verify_durability.py` con el entorno local aislado según [persistencia](../../arquitectura/persistencia.md), y la secuencia de caída/recuperación según [errores](../../arquitectura/errores.md). **Obtenido (2026-10-21):** [CI run #39665020146](https://github.com/marchelo23/Proyecto-Final-Metricas-y-DevOps/actions/runs/39665020146) 121/121 pruebas, JUnit/HTML archivados; durabilidad tras reinicio API+DB y consulta `200→503→200` con el mismo proceso API. Limitación: estos son resultados locales/CI, no Azure.
+
+**Pendiente para cerrar:** región/SKU/horas, cotización real y cargos observados de [DEV-14](https://github.com/marchelo23/Proyecto-Final-Metricas-y-DevOps/issues/20), contraste con Azure/K3s desplegado, revisión por integrante distinto y defensa. No se publica un monto USD inventado ni se afirma que la VM sea tolerante a fallos.
